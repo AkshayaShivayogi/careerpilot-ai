@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import dotenv from "dotenv";
+dotenv.config();
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
