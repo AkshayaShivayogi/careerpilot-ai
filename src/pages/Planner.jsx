@@ -7,7 +7,6 @@ import { getErrorMessage } from "../utils/httpError.js";
 import { parseApiBody, pickPlan } from "../utils/parseApi.js";
 import { useToast } from "../context/ToastContext.jsx";
 import PageHero from "../components/premium/PageHero.jsx";
-import AiBadge from "../components/AiBadge.jsx";
 import StatusBadge from "../components/premium/StatusBadge.jsx";
 import GlowProgress from "../components/premium/GlowProgress.jsx";
 import {
@@ -306,7 +305,7 @@ export default function Planner() {
       ];
       const { data } = await api.post("/planner", {
         period: "weekly",
-        label: `${tech} — Gemini ${careerGoal}`,
+        label: `${tech} — ${careerGoal}`,
         focus: tech,
         tasks,
         useAi: true,
@@ -337,13 +336,8 @@ export default function Planner() {
       <PageHero
         emoji="📅"
         title="Smart Learning Planner"
-        subtitle="Gemini builds a unique roadmap per technology, goal, and timeline — powered by Google Gemini AI."
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <AiBadge />
-          {geminiGenerated && <AiBadge variant="dynamic" />}
-        </div>
-      </PageHero>
+        subtitle="Build a unique roadmap per technology, goal, and timeline with adaptive weekly planning."
+      />
 
       <div className="glass-card grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -412,7 +406,7 @@ export default function Planner() {
         <GlowProgress value={loading ? 0 : progress} label="Roadmap progress" />
         <div className="flex flex-wrap gap-2">
           <button type="button" className="btn-glow text-sm" disabled={loading} onClick={generatePlan}>
-            {loading ? "Gemini generating…" : "Regenerate plan"}
+            {loading ? "Generating plan…" : "Regenerate plan"}
           </button>
           <button type="button" className="btn-ghost text-sm" disabled={saving || loading} onClick={saveFullPlan}>
             Save to MongoDB
@@ -609,7 +603,6 @@ export default function Planner() {
             <div className="glass-card p-5">
               <div className="mb-2 flex items-center gap-2">
                 <h3 className="font-semibold">Daily targets</h3>
-                {geminiGenerated && <AiBadge variant="generated" />}
               </div>
               <ul className="mt-2 space-y-1 text-sm text-slate-400">
                 {(plan.dailyTargets || []).map((d) => (
@@ -759,7 +752,6 @@ export default function Planner() {
                 <div className="flex justify-between">
                   <h2 className="font-semibold capitalize">
                     {p.period}: {p.label}
-                    {p.aiGenerated ? " · Gemini" : ""}
                   </h2>
                   <span>{p.progress}%</span>
                 </div>

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { safeApi } from "../services/api.js";
-import AiBadge from "../components/AiBadge.jsx";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -104,11 +103,8 @@ export default function Trending() {
       <PageHero
         emoji="🔥"
         title="Trending Technologies"
-        subtitle="Gemini-enriched market insights: demand %, hiring trends, salaries, and recommended skills."
-      >
-        {geminiGenerated && <AiBadge variant="dynamic" />}
-        <AiBadge />
-      </PageHero>
+        subtitle="Advanced market insights: demand %, hiring trends, salaries, and recommended skills."
+      />
 
       {loading && <p className="text-sm text-slate-500">Loading market insights…</p>}
 
@@ -161,7 +157,6 @@ export default function Trending() {
                     <div>
                       <h3 className="font-semibold">{tech.name}</h3>
                       <p className="text-xs text-slate-500">{tech.categoryLabel}</p>
-                      {tech.geminiGenerated && <AiBadge variant="generated" className="mt-1" />}
                     </div>
                   </div>
                   <ProgressRing value={tech.demand} size={56} stroke={5} />

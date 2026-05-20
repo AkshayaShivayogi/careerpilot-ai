@@ -244,10 +244,7 @@ export default function Resume() {
       >
         <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-electric-500/10 blur-3xl" />
         <div className="relative">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-electric-400">CareerPilot AI</p>
-            <AiBadge />
-          </div>
+          <p className="text-sm font-medium text-electric-400">CareerPilot AI</p>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">AI Resume Analyzer</h1>
           <p className="mt-3 max-w-3xl text-sm text-slate-400 sm:text-base">
             Analyze your resume using ATS scoring, AI skill detection, market trends, missing technologies,
