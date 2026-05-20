@@ -1,0 +1,30 @@
+{
+  "frontend": [
+    { "name": "React", "demand": 92, "growth": "+8%" },
+    { "name": "Next.js", "demand": 88, "growth": "+14%" },
+    { "name": "TypeScript", "demand": 90, "growth": "+11%" },
+    { "name": "Tailwind CSS", "demand": 85, "growth": "+9%" },
+    { "name": "Vue.js", "demand": 72, "growth": "+3%" }
+  ],
+  "backend": [
+    { "name": "Node.js", "demand": 89, "growth": "+7%" },
+    { "name": "Python", "demand": 94, "growth": "+10%" },
+    { "name": "Go", "demand": 78, "growth": "+12%" },
+    { "name": "PostgreSQL", "demand": 86, "growth": "+6%" },
+    { "name": "GraphQL", "demand": 74, "growth": "+5%" }
+  ],
+  "ai": [
+    { "name": "OpenAI APIs", "demand": 95, "growth": "+22%" },
+    { "name": "LangChain", "demand": 82, "growth": "+18%" },
+    { "name": "PyTorch", "demand": 80, "growth": "+9%" },
+    { "name": "RAG Systems", "demand": 88, "growth": "+20%" },
+    { "name": "Vector DBs", "demand": 76, "growth": "+15%" }
+  ],
+  "cloud": [
+    { "name": "AWS", "demand": 91, "growth": "+8%" },
+    { "name": "Docker", "demand": 87, "growth": "+7%" },
+    { "name": "Kubernetes", "demand": 84, "growth": "+11%" },
+    { "name": "Terraform", "demand": 79, "growth": "+10%" },
+    { "name": "Azure", "demand": 75, "growth": "+6%" }
+  ]
+}

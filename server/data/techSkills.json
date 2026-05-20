@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "frontend": ["html", "css", "javascript", "typescript", "react", "next.js", "nextjs", "angular", "vue", "vue.js", "svelte", "redux", "tailwind", "bootstrap", "sass", "webpack", "vite", "responsive design", "accessibility", "figma"],
+    "backend": ["node.js", "nodejs", "express", "fastapi", "django", "flask", "spring", "spring boot", "asp.net", ".net", "rest api", "graphql", "microservices", "api design"],
+    "languages": ["java", "python", "c", "c++", "c#", "go", "golang", "rust", "kotlin", "swift", "php", "ruby", "scala", "r"],
+    "database": ["mongodb", "mysql", "postgresql", "postgres", "sql", "redis", "firebase", "dynamodb", "elasticsearch", "oracle", "sqlite", "prisma"],
+    "cloud": ["aws", "amazon web services", "azure", "gcp", "google cloud", "docker", "kubernetes", "terraform", "ansible", "jenkins", "github actions", "ci/cd", "devops", "linux", "nginx"],
+    "mern": ["mongodb", "express", "react", "node.js", "mern", "jwt", "rest api"],
+    "testing": ["jest", "mocha", "cypress", "selenium", "unit testing", "integration testing", "tdd", "pytest"],
+    "ai": ["machine learning", "deep learning", "tensorflow", "pytorch", "nlp", "computer vision", "llm", "openai", "langchain", "scikit-learn", "pandas", "numpy"],
+    "security": ["cybersecurity", "owasp", "penetration testing", "encryption", "oauth", "security", "siem"],
+    "data": ["data analysis", "data science", "tableau", "power bi", "etl", "spark", "hadoop", "statistics"]
+  },
+  "roleProfiles": {
+    "mern stack developer": { "categories": ["mern", "frontend", "backend", "database", "cloud", "testing"], "priority": ["react", "node.js", "mongodb", "express", "typescript", "redux", "jwt", "docker", "aws", "jest", "ci/cd"] },
+    "full stack developer": { "categories": ["frontend", "backend", "database", "cloud", "testing"], "priority": ["react", "node.js", "typescript", "postgresql", "docker", "aws", "rest api", "git"] },
+    "frontend developer": { "categories": ["frontend", "testing"], "priority": ["react", "typescript", "javascript", "css", "html", "redux", "vite", "jest", "responsive design"] },
+    "backend developer": { "categories": ["backend", "database", "cloud"], "priority": ["node.js", "python", "java", "postgresql", "mongodb", "rest api", "docker", "kubernetes"] },
+    "java developer": { "categories": ["languages", "backend", "database"], "priority": ["java", "spring boot", "hibernate", "sql", "microservices", "maven", "junit"] },
+    "python developer": { "categories": ["languages", "backend", "data", "ai"], "priority": ["python", "django", "flask", "fastapi", "postgresql", "pandas", "pytest"] },
+    "devops engineer": { "categories": ["cloud", "backend"], "priority": ["docker", "kubernetes", "aws", "terraform", "jenkins", "ci/cd", "linux", "ansible"] },
+    "cloud engineer": { "categories": ["cloud"], "priority": ["aws", "azure", "docker", "kubernetes", "terraform", "linux", "networking"] },
+    "ai/ml engineer": { "categories": ["ai", "languages", "data"], "priority": ["python", "tensorflow", "pytorch", "machine learning", "nlp", "pandas", "scikit-learn"] },
+    "data analyst": { "categories": ["data", "database"], "priority": ["sql", "python", "excel", "tableau", "power bi", "statistics", "etl"] },
+    "software engineer": { "categories": ["frontend", "backend", "database", "languages", "testing"], "priority": ["git", "algorithms", "system design", "javascript", "python", "sql", "agile"] }
+  }
+}

@@ -1,0 +1,18 @@
+import { buildTechConcepts, builders } from "./topicBuilder.js";
+
+const T = "PostgreSQL";
+
+export const postgresqlConcepts = buildTechConcepts(T, [
+  { name: "MVCC concurrency", beginner: "Readers don't block writers; snapshots per transaction.", intermediate: "VACUUM reclaims dead tuples.", advanced: "Serialization anomalies at high isolation.", mcq: builders.mcq(T, "pg", "Default isolation level?", ["Read uncommitted", "Read committed", "Serializable only"], "Read committed", "MVCC implementation.") },
+  { name: "indexes btree gin gist", beginner: "B-tree default; GIN for JSONB full text.", intermediate: "Partial indexes WHERE clause.", advanced: "BRIN for time-series.", coding: builders.coding(T, "Index JSONB field status?", "GIN index on jsonb_path_ops or expression index.", "Query patterns.", "O(log n)", "O(1)") },
+  { name: "EXPLAIN ANALYZE", beginner: "Shows actual row counts vs estimates.", intermediate: "Seq Scan vs Index Scan choice.", advanced: "Adjust statistics run analyze.", scenario: builders.scenario(T, "perf", "Planner chooses seq scan wrongly.", "ANALYZE; increase default_statistics_target; fix correlated cols.", "Bad estimates.") },
+  { name: "window functions", beginner: "ROW_NUMBER RANK OVER PARTITION BY.", intermediate: "Running totals LAG LEAD.", advanced: "Optimize with indexes on partition keys.", why: "Analytics SQL interviews." },
+  { name: "CTEs and recursion", beginner: "WITH clause readable subqueries.", intermediate: "Recursive CTE org hierarchies.", advanced: "MATERIALIZED CTE PG12+ control.", debug: builders.debug(T, "cte", "CTE performance surprise.", ["MATERIALIZED hint", "Always faster", "Disable SQL"], "MATERIALIZED hint", "Inlining behavior changed.") },
+  { name: "JSONB", beginner: "JSONB binary efficient indexing.", intermediate: "Operators -> ->> @> containment.", advanced: "Schema validation check constraints.", coding: builders.coding(T, "Query nested JSON attribute?", "jsonb_path_query or ->> with GIN.", "Index strategy.", "", "—", "—") },
+  { name: "foreign keys constraints", beginner: "REFERENCES ON DELETE CASCADE.", intermediate: "Deferrable constraints transactions.", advanced: "Partitioned tables FK limitations.", why: "Data integrity." },
+  { name: "replication streaming", beginner: "Primary WAL shipped to standby.", intermediate: "Logical replication selective tables.", advanced: "Failover Patroni repmgr.", scenario: builders.scenario(T, "ha", "Failover split-brain risk.", "Quorum/etcd; fencing; test drills.", "RTO/RPO.") },
+  { name: "locking", beginner: "SELECT FOR UPDATE row lock.", intermediate: "Advisory locks app coordination.", advanced: "Deadlock detection logs.", bestPractice: { question: "Long transaction problem?", answer: "Bloat, lock contention; keep transactions short.", explanation: "MVCC bloat." } },
+  { name: "extensions", beginner: "pgcrypto uuid-ossp postgis.", intermediate: "citext case-insensitive text.", advanced: "Timescale hypertables.", why: "Postgres ecosystem." },
+  { name: "partitioning", beginner: "Declarative PARTITION BY RANGE.", intermediate: "Partition pruning queries.", advanced: "Attach detach partitions maintenance.", coding: builders.coding(T, "Migrate huge table online?", "Create partitioned table; copy batches; swap.", "Minimal downtime plan.", "", "—", "—") },
+  { name: "security roles", beginner: "ROLE GRANT schema privileges.", intermediate: "Row Level Security policies.", advanced: "SCRAM auth; pgbouncer pool.", scenario: builders.scenario(T, "rls", "Multi-tenant data leak.", "RLS policy tenant_id = current_setting.", "Defense in depth.") },
+]);

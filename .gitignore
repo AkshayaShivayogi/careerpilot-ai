@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.*
+backend/node_modules
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/.dev-port
+server/.dev-port
+.mongo-data
+

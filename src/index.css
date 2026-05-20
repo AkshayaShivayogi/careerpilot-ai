@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-navy-950 text-slate-100;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.15), transparent),
+      linear-gradient(180deg, #030712 0%, #0a0f1f 100%);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-glass;
+  }
+
+  .btn-glow {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-electric-500 to-electric-600 px-5 py-2.5 font-semibold text-white shadow-glow transition hover:brightness-110 disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 font-medium text-slate-200 transition hover:bg-white/10;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-navy-900/80 px-4 py-2.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-electric-500/50 focus:ring-2 focus:ring-electric-500/20;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white;
+  }
+
+  .nav-link-active {
+    @apply bg-electric-500/10 text-electric-400;
+  }
+
+  .premium-hero {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(139, 92, 246, 0.06));
+  }
+
+  .premium-gradient-text {
+    @apply bg-gradient-to-r from-white via-electric-400 to-violet-300 bg-clip-text text-transparent;
+  }
+
+  .premium-card {
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.12);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .premium-card:hover {
+    box-shadow: 0 0 32px rgba(14, 165, 233, 0.22);
+  }
+}

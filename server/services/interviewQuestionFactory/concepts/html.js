@@ -1,0 +1,18 @@
+import { buildTechConcepts, builders } from "./topicBuilder.js";
+
+const T = "HTML";
+
+export const htmlConcepts = buildTechConcepts(T, [
+  { name: "semantic HTML elements", beginner: "header nav main article section footer improve a11y and SEO.", intermediate: "Use button for actions, a for navigation.", advanced: "Landmarks help screen readers skip content.", mcq: builders.mcq(T, "semantic", "Best element for site navigation?", ["div", "nav", "span"], "nav", "Semantic landmark.") },
+  { name: "forms and input types", beginner: "label associated with input; required attribute.", intermediate: "type=email/url/date triggers validation.", advanced: "fieldset/legend groups related inputs.", coding: builders.coding(T, "Accessible login form structure?", "label for, autocomplete, error aria-describedby.", "WCAG.", "", "—", "—") },
+  { name: "ARIA when semantics fail", beginner: "aria-label for icon buttons.", intermediate: "Don't override native semantics unnecessarily.", advanced: "aria-live for dynamic updates.", scenario: builders.scenario(T, "a11y", "Screen reader skips custom dropdown.", "Use listbox pattern or native select.", "Test with NVDA.") },
+  { name: "SEO meta and headings", beginner: "Single h1; logical heading hierarchy.", intermediate: "meta description, canonical, og tags.", advanced: "Structured data JSON-LD for rich results.", why: "Marketing pages." },
+  { name: "document structure DOCTYPE", beginner: "<!DOCTYPE html> triggers standards mode.", intermediate: "html lang attribute for i18n.", advanced: "preload critical fonts/scripts.", debug: builders.debug(T, "layout", "Quirks mode broken layout.", ["Missing DOCTYPE", "Too many divs", "CSS disabled"], "Missing DOCTYPE", "Validate HTML.") },
+  { name: "images picture responsive", beginner: "alt text required; width/height prevent CLS.", intermediate: "srcset sizes for responsive images.", advanced: "picture element art direction.", why: "Core Web Vitals." },
+  { name: "tables accessibility", beginner: "th scope col/row; caption describes table.", intermediate: "Avoid layout tables.", advanced: "Complex tables use headers/id.", scenario: builders.scenario(T, "tables", "Data grid for finance.", "Sticky headers, keyboard nav, announce sort.", "Enterprise a11y.") },
+  { name: "iframe and embed security", beginner: "sandbox attribute limits capabilities.", intermediate: "CSP frame-ancestors prevents clickjacking.", advanced: "lazy loading iframes.", why: "Security reviews." },
+  { name: "microdata and accessibility tree", beginner: "Browser builds accessibility tree from DOM.", intermediate: "Hidden visibility still may be read if poorly done.", advanced: "inert attribute disables interaction.", bestPractice: { question: "When to use native dialog?", answer: "Built-in focus trap and ESC close in modern browsers.", explanation: "Prefer over div modal." } },
+  { name: "HTML5 APIs canvas video", beginner: "video controls poster preload metadata.", intermediate: "track kind=captions for subtitles.", advanced: "Media accessibility legal requirements.", coding: builders.coding(T, "Defer non-critical scripts?", "defer vs async vs module type=module.", "Parser blocking.", "", "—", "—") },
+  { name: "content security and sanitization", beginner: "Never innerHTML untrusted user content.", intermediate: "DOMPurify sanitize rich text.", advanced: "CSP script-src restricts inline scripts.", scenario: builders.scenario(T, "xss", "Stored XSS in comment field.", "Sanitize output encode; CSP; HttpOnly cookies.", "OWASP.") },
+  { name: "performance resource hints", beginner: "rel=preconnect dns-prefetch.", intermediate: "fetchpriority=high on LCP image.", advanced: "Speculation rules prerender carefully.", why: "Frontend perf interviews." },
+]);

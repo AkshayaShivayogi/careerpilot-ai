@@ -1,0 +1,19 @@
+CareerPilot AI — Recovery backup
+Created: 2026-05-20 (before stability recovery pass)
+Source: C:\projects\CAREERPILOT-AI
+Destination: C:\projects\CAREERPILOT-AI-RECOVERY-BACKUP
+
+Included:
+- src/ (frontend)
+- server/ (backend)
+- package.json, package-lock.json
+- vite.config.js, tailwind.config.js, index.html
+- .env.development, .env.example (if present)
+- scripts/, public/, README.md
+
+Excluded (reinstall via npm):
+- node_modules/
+- dist/
+- .git/
+
+Restore: copy files from this folder back to CAREERPILOT-AI (do not delete originals without intent).
