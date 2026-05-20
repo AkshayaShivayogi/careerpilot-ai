@@ -78,12 +78,17 @@ app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(mongoSanitize());
 app.use(express.json({ limit: "10mb" }));
 
-app.get("/api/health", (_req, res) => {
+app.get("/", (req, res) => {
+  res.send("CareerPilot API is running 🚀");
+});
+
+app.get("/api/health", (req, res) => {
   const db = getDbStatus();
+
   res.json({
     success: true,
     ok: true,
-    message: "CareerPilot API running",
+    message: "CareerPilot API running 🚀",
     service: "careerpilot-ai",
     port: PORT,
     database: db,
