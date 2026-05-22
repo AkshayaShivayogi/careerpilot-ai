@@ -220,7 +220,7 @@ careerpilot-ai/
 # 🌐 Deployment
 
 Frontend Deployment:
-- Vercel
+- Render 
 
 Backend Deployment:
 - Render / Railway
