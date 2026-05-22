@@ -55,10 +55,16 @@ app.use(
   })
 );
 
+const corsOrigins = process.env.CORS_ORIGIN?.split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: corsOrigins?.length ? corsOrigins : true,
+    credentials: false,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

@@ -8,7 +8,13 @@ import { calcProfileCompletion } from "../utils/profileCompletion.js";
 import { findUserByEmail, normalizeEmail } from "../utils/findUserByEmail.js";
 import { verifyPassword, hashPassword } from "../utils/passwordAuth.js";
 import { generateResetToken, hashResetToken } from "../utils/resetToken.js";
-import { sendPasswordResetEmail, getClientBaseUrl } from "../services/mailService.js";
+import {
+  sendPasswordResetEmail,
+  buildPasswordResetUrl,
+  getClientBaseUrl,
+  smtpConfigured,
+  verifySmtpConnection,
+} from "../services/mailService.js";
 
 function publicUser(doc) {
   const user = doc.toPublicJSON();
@@ -308,40 +314,94 @@ const FORGOT_PASSWORD_MESSAGE =
 export async function forgotPassword(req, res, next) {
   try {
     const email = normalizeEmail(req.body.email);
+    console.log("[auth] forgot-password request:", { email });
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ success: false, message: "Enter a valid email address" });
     }
 
-    const user = await findUserByEmail(email);
-    if (user) {
-      const { token, hash, expires } = generateResetToken();
-      await User.updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            passwordResetToken: hash,
-            passwordResetExpires: expires,
-          },
-        }
-      );
-
-      const resetUrl = `${getClientBaseUrl()}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
-      try {
-        await sendPasswordResetEmail({
-          to: email,
-          resetUrl,
-          fullName: user.fullName,
-        });
-      } catch (mailErr) {
-        console.error("[auth] forgot-password email failed:", mailErr.message);
-      }
-
-      await logActivity(user, "auth", "Password reset requested");
+    if (!smtpConfigured()) {
+      console.error("[auth] forgot-password: SMTP env missing on server");
+      return res.status(503).json({
+        success: false,
+        message: "Email service is not configured on the server.",
+        mailError: "Missing SMTP_HOST, SMTP_USER, or SMTP_PASS",
+      });
     }
 
-    res.json({ success: true, message: FORGOT_PASSWORD_MESSAGE });
+    const user = await findUserByEmail(email);
+    if (!user) {
+      console.log("[auth] forgot-password: no user for email (returning generic success):", email);
+      return res.json({ success: true, message: FORGOT_PASSWORD_MESSAGE });
+    }
+
+    const { token, hash, expires } = generateResetToken();
+    console.log("[auth] reset token generated:", {
+      email,
+      expires: expires.toISOString(),
+      tokenPreview: `${token.slice(0, 8)}…`,
+    });
+
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          passwordResetToken: hash,
+          passwordResetExpires: expires,
+        },
+      }
+    );
+    console.log("[auth] reset token saved to MongoDB for:", email);
+
+    const resetUrl = buildPasswordResetUrl(token, email);
+    console.log("RESET URL:", resetUrl);
+    console.log("[auth] CLIENT_URL resolved:", getClientBaseUrl());
+
+    const mailStarted = Date.now();
+    let mailResult = { sent: false, error: "Unknown mail error" };
+
+    try {
+      mailResult = await sendPasswordResetEmail({
+        to: email,
+        resetUrl,
+        fullName: user.fullName,
+      });
+    } catch (mailErr) {
+      console.error("[auth] forgot-password mail exception:", mailErr);
+      mailResult = {
+        sent: false,
+        error: mailErr?.message || String(mailErr),
+      };
+    }
+
+    console.log("[auth] forgot-password mail result:", {
+      email,
+      ms: Date.now() - mailStarted,
+      sent: mailResult.sent,
+      messageId: mailResult.messageId,
+      error: mailResult.error,
+    });
+
+    if (!mailResult.sent) {
+      const verifyDebug = await verifySmtpConnection();
+      console.error("[auth] SMTP verify after failed send:", verifyDebug);
+
+      return res.status(503).json({
+        success: false,
+        message: "Failed to send reset email.",
+        mailError: mailResult.error,
+      });
+    }
+
+    console.log("EMAIL SENT");
+    await logActivity(user, "auth", "Password reset requested");
+
+    return res.json({
+      success: true,
+      message: FORGOT_PASSWORD_MESSAGE,
+    });
   } catch (e) {
-    console.error("[auth] forgot-password error:", e.message);
+    console.error("[auth] forgot-password error:", e);
     next(e);
   }
 }

@@ -16,16 +16,19 @@ export default function ForgotPassword() {
     setMessage("");
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/forgot-password", {
-        email: email.trim().toLowerCase(),
-      });
+      const { data } = await api.post(
+        "/auth/forgot-password",
+        { email: email.trim().toLowerCase() },
+        { timeout: 25_000 }
+      );
       setMessage(
         data?.message ||
           "If an account exists with that email, you will receive password reset instructions shortly."
       );
       setEmail("");
     } catch (err) {
-      setError(getErrorMessage(err, "Could not send reset email"));
+      const mailError = err?.response?.data?.mailError;
+      setError(mailError || getErrorMessage(err, "Could not send reset email"));
     } finally {
       setLoading(false);
     }
