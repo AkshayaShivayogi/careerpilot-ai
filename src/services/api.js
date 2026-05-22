@@ -30,3 +30,5 @@ export {
 };
 
 export default api;
+
+export { safeApi, safeApiCall } from "../utils/safeApi.js";

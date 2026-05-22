@@ -36,6 +36,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import AiBadge from "../components/AiBadge.jsx";
 import AiTypingText from "../components/AiTypingText.jsx";
 import AiLoadingSkeleton from "../components/AiLoadingSkeleton.jsx";
+import Loader, { ButtonLoading } from "../components/Loader.jsx";
 import { useTechnologyCatalog } from "../hooks/useTechnologyCatalog.js";
 import { resolveTechnologyName } from "../data/technologyCatalog.js";
 
@@ -518,8 +519,8 @@ export default function Interview() {
               </select>
             </div>
             <div className="flex items-end">
-              <button type="button" className="btn-glow w-full" disabled={loading} onClick={startInterview}>
-                {loading ? "Generating…" : "Start interview"}
+              <button type="button" className="btn-glow w-full" disabled={loading} onClick={startInterview} aria-busy={loading}>
+                {loading ? <ButtonLoading>Generating interview…</ButtonLoading> : "Start interview"}
               </button>
             </div>
           </div>
@@ -618,7 +619,12 @@ export default function Interview() {
             </p>
           </motion.div>
 
-          <div className="glass-card p-6">
+          <div className="glass-card relative p-6">
+            {loading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-navy-950/75 backdrop-blur-sm">
+                <Loader size="md" label="AI is scoring your answer…" center />
+              </div>
+            )}
             <div className="mb-3 flex flex-wrap gap-2 text-xs">
               <span className="rounded bg-navy-800 px-2 py-1 text-slate-300">{current.type}</span>
               <span className="rounded bg-navy-800 px-2 py-1 text-slate-300">{current.topic}</span>
@@ -683,8 +689,8 @@ export default function Interview() {
                 💾 Save session
               </button>
               {!feedback ? (
-                <button type="button" className="btn-glow" disabled={loading} onClick={submitCurrent}>
-                  {loading ? "Scoring…" : "Submit answer"}
+                <button type="button" className="btn-glow" disabled={loading} onClick={submitCurrent} aria-busy={loading}>
+                  {loading ? <ButtonLoading>Scoring answer…</ButtonLoading> : "Submit answer"}
                 </button>
               ) : (
                 <button

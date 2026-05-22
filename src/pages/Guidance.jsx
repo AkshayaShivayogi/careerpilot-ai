@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { safeApi } from "../services/api.js";
+import { PageLoader } from "../components/Loader.jsx";
 
 const FALLBACK = {
   summary: "Career guidance is temporarily unavailable. Explore roadmaps and practice interviews while we reconnect.",
@@ -32,7 +33,13 @@ export default function Guidance() {
     };
   }, []);
 
-  if (loading) return <div className="glass-card p-8">Loading neural guidance…</div>;
+  if (loading) {
+    return (
+      <div className="glass-card p-8">
+        <PageLoader label="Loading career guidance…" minHeight="min-h-32" />
+      </div>
+    );
+  }
 
   const data = g || FALLBACK;
 

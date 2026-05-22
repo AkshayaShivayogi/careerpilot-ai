@@ -21,6 +21,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { getErrorMessage } from "../utils/httpError.js";
 import { buildLocalResumeAnalysis } from "../data/apiFallbacks.js";
 import AiBadge from "../components/AiBadge.jsx";
+import Loader, { ButtonLoading } from "../components/Loader.jsx";
 
 const ACCEPT = ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -300,12 +301,13 @@ export default function Resume() {
             >
               <p className="text-lg text-slate-200">Drag & drop your resume</p>
               <p className="mt-1 text-sm text-slate-500">PDF or DOCX · max 5MB</p>
-              <label className="btn-glow mt-4 inline-block cursor-pointer">
+              <label className={`btn-glow mt-4 inline-block ${loading ? "pointer-events-none opacity-50" : "cursor-pointer"}`}>
                 Choose file
                 <input
                   type="file"
                   accept={ACCEPT}
                   className="hidden"
+                  disabled={loading}
                   onChange={(e) => pickFile(e.target.files?.[0] || null)}
                 />
               </label>
@@ -318,11 +320,11 @@ export default function Resume() {
                   <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className="btn-ghost text-sm" onClick={clearFile}>
+                  <button type="button" className="btn-ghost text-sm" disabled={loading} onClick={clearFile}>
                     Remove
                   </button>
-                  <button type="submit" className="btn-glow text-sm" disabled={loading}>
-                    {loading ? "Analyzing…" : "Analyze resume"}
+                  <button type="submit" className="btn-glow text-sm" disabled={loading} aria-busy={loading}>
+                    {loading ? <ButtonLoading>Analyzing resume…</ButtonLoading> : "Analyze resume"}
                   </button>
                 </div>
               </div>
@@ -330,8 +332,11 @@ export default function Resume() {
 
             {loading && uploadProgress > 0 && (
               <div>
-                <div className="mb-1 flex justify-between text-xs text-slate-500">
-                  <span>Processing resume…</span>
+                <div className="mb-1 flex items-center justify-between gap-2 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-2">
+                    <Loader size="sm" />
+                    Uploading & analyzing resume…
+                  </span>
                   <span>{uploadProgress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-navy-800">
@@ -380,8 +385,13 @@ export default function Resume() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className="btn-ghost text-sm" onClick={() => openHistoryItem(h.id || h._id)}>
-                    View report
+                  <button
+                    type="button"
+                    className="btn-ghost text-sm"
+                    disabled={loading}
+                    onClick={() => openHistoryItem(h.id || h._id)}
+                  >
+                    {loading ? <ButtonLoading>Loading…</ButtonLoading> : "View report"}
                   </button>
                   <button
                     type="button"

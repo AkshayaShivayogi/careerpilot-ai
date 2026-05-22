@@ -18,6 +18,7 @@ import PageHero from "../components/premium/PageHero.jsx";
 import PremiumModuleGrid from "../components/dashboard/PremiumModuleGrid.jsx";
 import SmartInsights from "../components/dashboard/SmartInsights.jsx";
 import { getTopTrending } from "../data/trendingTechnologies.js";
+import { PageLoader } from "../components/Loader.jsx";
 
 function FeatureCard({ to, icon, title, subtitle, stats, cta, accent }) {
   return (
@@ -67,11 +68,7 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-48 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-electric-500 border-t-transparent" />
-      </div>
-    );
+    return <PageLoader label="Loading dashboard…" />;
   }
 
   const resume = data.features?.resume || {};

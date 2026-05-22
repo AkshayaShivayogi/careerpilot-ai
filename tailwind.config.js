@@ -28,6 +28,14 @@ export default {
         "grid-pattern":
           "linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px)",
       },
+      keyframes: {
+        "spin-smooth": {
+          to: { transform: "rotate(360deg)" },
+        },
+      },
+      animation: {
+        "spin-smooth": "spin-smooth 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+      },
     },
   },
   plugins: [],

@@ -14,7 +14,7 @@ import {
   PLANNER_DURATIONS,
   PLANNER_CAREER_GOALS,
 } from "../data/plannerTechList.js";
-import AiLoadingSkeleton from "../components/AiLoadingSkeleton.jsx";
+import Loader, { ButtonLoading } from "../components/Loader.jsx";
 import { useTechnologyCatalog } from "../hooks/useTechnologyCatalog.js";
 import { resolveTechnologyName } from "../data/technologyCatalog.js";
 import { buildStaticPlan } from "../utils/staticPlanner.js";
@@ -405,11 +405,11 @@ export default function Planner() {
         </div>
         <GlowProgress value={loading ? 0 : progress} label="Roadmap progress" />
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-glow text-sm" disabled={loading} onClick={generatePlan}>
-            {loading ? "Generating plan…" : "Regenerate plan"}
+          <button type="button" className="btn-glow text-sm" disabled={loading} onClick={generatePlan} aria-busy={loading}>
+            {loading ? <ButtonLoading>Generating plan…</ButtonLoading> : "Regenerate plan"}
           </button>
           <button type="button" className="btn-ghost text-sm" disabled={saving || loading} onClick={saveFullPlan}>
-            Save to MongoDB
+            {saving ? <ButtonLoading>Saving…</ButtonLoading> : "Save to MongoDB"}
           </button>
           <Link to={`/interview?technology=${encodeURIComponent(tech)}`} className="btn-ghost text-sm">
             Mock interview
@@ -418,7 +418,16 @@ export default function Planner() {
       </div>
 
       {enhancing && (
-        <p className="text-xs text-slate-500">Optional AI enhancement in progress…</p>
+        <p className="inline-flex items-center gap-2 text-xs text-slate-500">
+          <Loader size="sm" />
+          Optional AI enhancement in progress…
+        </p>
+      )}
+
+      {loading && (
+        <div className="glass-card flex justify-center p-6">
+          <Loader size="md" label="AI is generating your learning plan…" center />
+        </div>
       )}
 
       {error && !loading && <p className="text-sm text-amber-300">{error}</p>}

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getErrorMessage } from "../utils/httpError.js";
 import GoogleSignInButton from "../components/GoogleSignInButton.jsx";
+import { ButtonLoading } from "../components/Loader.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
 export default function Login() {
@@ -44,8 +45,8 @@ export default function Login() {
           <input className="input-field mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </label>
         {error && <p className="text-sm text-red-400">{error}</p>}
-        <button type="submit" className="btn-glow w-full" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+        <button type="submit" className="btn-glow w-full" disabled={loading} aria-busy={loading}>
+          {loading ? <ButtonLoading>Signing in…</ButtonLoading> : "Sign in"}
         </button>
       </form>
       <GoogleSignInButton onSuccess={() => navigate(from, { replace: true })} />
