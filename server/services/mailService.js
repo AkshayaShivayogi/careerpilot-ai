@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 
-/** Trim Render/env values; strip wrapping quotes. */
 export function cleanEnv(value) {
   if (value == null) return "";
   let v = String(value).trim();
@@ -14,11 +13,7 @@ export function cleanEnv(value) {
 }
 
 export function smtpConfigured() {
-  return Boolean(
-    process.env.SMTP_HOST?.trim() &&
-      process.env.SMTP_USER?.trim() &&
-      process.env.SMTP_PASS?.trim()
-  );
+  return Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim());
 }
 
 export function formatMailError(err) {
@@ -31,33 +26,6 @@ export function formatMailError(err) {
     err.response && `response=${String(err.response).slice(0, 500)}`,
   ].filter(Boolean);
   return parts.join(" | ");
-}
-
-export function createTransport() {
-  if (!smtpConfigured()) {
-    console.error("[mail] createTransport: missing SMTP_HOST, SMTP_USER, or SMTP_PASS");
-    return null;
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-
-  console.log("[mail] createTransport:", {
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
-    user: process.env.SMTP_USER,
-    hasPassword: Boolean(process.env.SMTP_PASS),
-  });
-
-  return transporter;
 }
 
 export function getClientBaseUrl() {
@@ -73,80 +41,55 @@ export function buildPasswordResetUrl(token, email) {
   return `${clientUrl}/reset-password?token=${token}&email=${email}`;
 }
 
-function resolveFromAddress() {
-  const fromEnv = cleanEnv(process.env.SMTP_FROM);
-  if (fromEnv && fromEnv.includes("@")) return fromEnv;
-  return process.env.SMTP_USER;
-}
-
 /**
- * @returns {Promise<{ sent: boolean, messageId?: string, error?: string, info?: object }>}
+ * @returns {Promise<{ sent: boolean, messageId?: string, error?: string }>}
  */
 export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
   if (!smtpConfigured()) {
-    const msg = "SMTP not configured — set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS on Render";
+    const msg = "SMTP not configured — set SMTP_USER, SMTP_PASS, and SMTP_FROM on Render";
     console.error("[mail]", msg);
     return { sent: false, error: msg };
   }
 
-  console.log("[mail] sendPasswordResetEmail →", { to, resetUrl });
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
-  const transporter = createTransport();
-  if (!transporter) {
-    return { sent: false, error: "Failed to create nodemailer transport" };
-  }
+  const subject = "Reset your CareerPilot AI password";
+  const html = `
+    <p>Hi ${fullName || "there"},</p>
+    <p>We received a request to reset your CareerPilot AI password.</p>
+    <p><a href="${resetUrl}">Reset your password</a></p>
+    <p>Or copy this link: ${resetUrl}</p>
+    <p>This link expires in 1 hour.</p>
+    <p>If you did not request this, you can ignore this email.</p>
+  `;
 
-  const from = resolveFromAddress();
+  console.log("[mail] sendMail →", { to, from: process.env.SMTP_FROM });
 
   try {
     const info = await transporter.sendMail({
-      from,
+      from: process.env.SMTP_FROM,
       to,
-      subject: "Reset your CareerPilot AI password",
-      text: [
-        `Hi ${fullName || "there"},`,
-        "",
-        "We received a request to reset your password.",
-        "",
-        `Reset your password using this link (expires in 1 hour):`,
-        resetUrl,
-        "",
-        "If you did not request this, you can ignore this email.",
-      ].join("\n"),
-      html: `
-        <p>Hi ${fullName || "there"},</p>
-        <p>We received a request to reset your CareerPilot AI password.</p>
-        <p><a href="${resetUrl}">Reset your password</a></p>
-        <p>Or copy this link: ${resetUrl}</p>
-        <p>This link expires in 1 hour.</p>
-        <p>If you did not request this, you can ignore this email.</p>
-      `,
+      subject,
+      html,
     });
 
-    if (info.rejected?.length) {
-      const err = `sendMail rejected recipients: ${info.rejected.join(", ")}`;
-      console.error("[mail]", err, info);
-      return { sent: false, error: err, info };
-    }
-
-    console.log("[mail] transporter.sendMail() response:", {
+    console.log("[mail] sendMail OK:", {
       messageId: info.messageId,
       accepted: info.accepted,
       rejected: info.rejected,
-      response: info.response,
     });
     console.log("EMAIL SENT");
 
-    return { sent: true, messageId: info.messageId, info };
+    return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.error("[mail] transporter.sendMail() FAILED — full error:", err);
-    console.error("[mail] nodemailer error:", formatMailError(err));
+    console.error("[mail] sendMail FAILED:", err);
+    console.error("[mail] error:", formatMailError(err));
     return { sent: false, error: formatMailError(err) };
-  } finally {
-    try {
-      if (transporter?.close) await transporter.close();
-    } catch (closeErr) {
-      console.warn("[mail] transport.close:", closeErr?.message);
-    }
   }
 }

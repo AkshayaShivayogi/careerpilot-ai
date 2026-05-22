@@ -16,11 +16,9 @@ export default function ForgotPassword() {
     setMessage("");
     setLoading(true);
     try {
-      const { data } = await api.post(
-        "/auth/forgot-password",
-        { email: email.trim().toLowerCase() },
-        { timeout: 25_000 }
-      );
+      const { data } = await api.post("/auth/forgot-password", {
+        email: email.trim().toLowerCase(),
+      });
       setMessage(
         data?.message ||
           "If an account exists with that email, you will receive password reset instructions shortly."

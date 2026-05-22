@@ -324,7 +324,7 @@ export async function forgotPassword(req, res, next) {
       return res.status(503).json({
         success: false,
         message: "Email service is not configured on the server.",
-        mailError: "Missing SMTP_HOST, SMTP_USER, or SMTP_PASS",
+        mailError: "Missing SMTP_USER or SMTP_PASS",
       });
     }
 
