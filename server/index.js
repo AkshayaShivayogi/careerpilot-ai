@@ -5,11 +5,15 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import dotenv from "dotenv";
 dotenv.config();
+
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+
 import { connectDb, getDbStatus } from "./config/db.js";
+
 import { errorHandler } from "./middleware/errorHandler.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -29,109 +33,90 @@ import progressRoutes from "./routes/progressRoutes.js";
 import achievementsRoutes from "./routes/achievementsRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
+
 import { seedInterviewQuestions } from "./services/questionSeed.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const envPath = path.join(__dirname, ".env");
-const envExamplePath = path.join(__dirname, ".env.example");
-if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
-  fs.copyFileSync(envExamplePath, envPath);
-  console.warn("[server] Created server/.env from .env.example — review JWT_SECRET before production");
-}
-
-dotenv.config({ path: envPath, quiet: true });
-
-if (!process.env.JWT_SECRET?.trim()) {
-  if (process.env.NODE_ENV === "production") {
-    console.error("[fatal] JWT_SECRET is required in server/.env");
-    process.exit(1);
-  }
-  process.env.JWT_SECRET = "dev-only-jwt-secret-change-me";
-  console.warn("[server] Using development JWT_SECRET — set JWT_SECRET in server/.env for production");
-}
-
 const app = express();
-const PORT = Number(process.env.PORT) || 5000;
-const devPortFile = path.join(__dirname, ".dev-port");
 
-function clearDevPortFile() {
-  try {
-    fs.unlinkSync(devPortFile);
-  } catch {
-    /* not present */
-  }
-}
+const PORT = process.env.PORT || 5000;
 
-clearDevPortFile();
+/* =========================
+   SECURITY + MIDDLEWARE
+========================= */
 
-const corsOrigins = (
-  process.env.CORS_ORIGIN ||
-  "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5000,http://127.0.0.1:5000"
-)
-  .split(",")
-  .map((s) => s.trim());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-app.use(cors({ origin: corsOrigins, credentials: true }));
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
+
 app.use(mongoSanitize());
+
 app.use(express.json({ limit: "10mb" }));
 
-app.get("/", (req, res) => {
-  res.send("CareerPilot API is running 🚀");
-});
-
-app.get("/api/health", (req, res) => {
-  const db = getDbStatus();
-
-  res.json({
-    success: true,
-    ok: true,
-    message: "CareerPilot API running 🚀",
-    service: "careerpilot-ai",
-    port: PORT,
-    database: db,
-    gemini: Boolean(process.env.GEMINI_API_KEY?.trim()),
-  });
-});
+/* =========================
+   RATE LIMITER
+========================= */
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX) || 300,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many requests — try again later" },
-  skip: (req) =>
-    req.method === "POST" &&
-    (req.path.includes("/planner/generate") || req.path.includes("/interview/generate")),
 });
-app.use("/api/", apiLimiter);
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  res.on("finish", () => {
-    console.log(`[http] ${req.method} ${req.originalUrl} → ${res.statusCode} (${Date.now() - start}ms)`);
-  });
-  next();
-});
+app.use("/api", apiLimiter);
+
+/* =========================
+   STATIC FILES
+========================= */
 
 const uploadsPath = path.join(__dirname, "uploads");
-fs.mkdirSync(uploadsPath, { recursive: true });
+
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+
 app.use("/uploads", express.static(uploadsPath));
 
-app.use("/api/auth", authRoutes);
-console.log(
-  "AUTH ROUTES LOADED → POST /signup, POST /login, GET /me, PUT /profile, POST /logout"
-);
+/* =========================
+   HEALTH ROUTES
+========================= */
 
+app.get("/", (req, res) => {
+  res.send("CareerPilot API running 🚀");
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend working successfully 🚀",
+    database: getDbStatus(),
+  });
+});
+
+/* =========================
+   API ROUTES
+========================= */
+
+app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/roadmap", roadmapRoutes);
 app.use("/api/interview", interviewRoutes);
-console.log("INTERVIEW ROUTES LOADED → POST /generate, POST /submit, GET /history, GET /:id, DELETE /:id");
 app.use("/api/resume", resumeRoutes);
-console.log("RESUME ROUTES LOADED → POST /analyze, GET /history, GET /:id, DELETE /:id");
 app.use("/api/dsa", dsaRoutes);
 app.use("/api/planner", plannerRoutes);
 app.use("/api/trending", trendingRoutes);
@@ -146,54 +131,37 @@ app.use("/api/achievements", achievementsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/catalog", catalogRoutes);
 
+/* =========================
+   ERROR HANDLER
+========================= */
+
 app.use(errorHandler);
 
-async function start() {
-  console.log("[server] Starting CareerPilot API…");
-  console.log(`[server] PORT=${PORT}`);
+/* =========================
+   START SERVER
+========================= */
 
+async function startServer() {
   try {
+    console.log("[server] Connecting MongoDB...");
+
     await connectDb();
-  } catch (err) {
-    console.error("[fatal] MongoDB connection failed:", err.message);
-    clearDevPortFile();
+
+    console.log("[server] MongoDB connected successfully");
+
+    app.listen(PORT, () => {
+      console.log(`[server] Running on port ${PORT}`);
+
+      if (process.env.SKIP_SEED !== "true") {
+        seedInterviewQuestions().catch((err) => {
+          console.error("[seed error]", err.message);
+        });
+      }
+    });
+  } catch (error) {
+    console.error("[server startup error]", error.message);
     process.exit(1);
   }
-
-  try {
-    fs.writeFileSync(devPortFile, String(PORT), "utf8");
-  } catch (err) {
-    console.warn("[server] Could not write .dev-port:", err.message);
-  }
-
-  const httpServer = app.listen(PORT, () => {
-    try {
-      fs.writeFileSync(devPortFile, String(PORT), "utf8");
-    } catch {
-      /* non-fatal */
-    }
-    console.log(`[server] Listening → http://127.0.0.1:${PORT}`);
-    console.log(`[server] Health: http://127.0.0.1:${PORT}/api/health`);
-    console.log(`[server] Auth: http://127.0.0.1:${PORT}/api/auth/signup`);
-
-    if (process.env.SKIP_SEED !== "true") {
-      seedInterviewQuestions().catch((e) => {
-        console.error("[seed] Background seed failed:", e.message);
-      });
-    } else {
-      console.log("[seed] Skipped (SKIP_SEED=true)");
-    }
-  });
-
-  httpServer.on("error", (err) => {
-    clearDevPortFile();
-    if (err.code === "EADDRINUSE") {
-      console.error(`[fatal] Port ${PORT} is already in use. Stop the other API process or set PORT in server/.env`);
-    } else {
-      console.error("[fatal] Server error:", err.message);
-    }
-    process.exit(1);
-  });
 }
 
-start();
+startServer();
