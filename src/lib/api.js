@@ -1,36 +1,12 @@
-/** Production Render backend — never use localhost in production builds. */
-export const RENDER_API_ROOT = "https://careerpilot-backend-pdsi.onrender.com";
+/** Stable API config for CareerPilot */
 
-const LOCALHOST_RE = /localhost|127\.0\.0\.1/i;
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://careerpilot-backend-pdsi.onrender.com";
 
-function resolveApiRoot() {
-  const envUrl = import.meta.env.VITE_API_URL?.trim();
+export const API_BASE = API_URL.replace(/\/+$/, "");
 
-  if (import.meta.env.DEV) {
-    if (envUrl && !LOCALHOST_RE.test(envUrl)) {
-      return envUrl.replace(/\/+$/, "");
-    }
-    return "";
-  }
-
-  if (envUrl && !LOCALHOST_RE.test(envUrl)) {
-    return envUrl.replace(/\/+$/, "");
-  }
-
-  return RENDER_API_ROOT;
-}
-
-const clean = resolveApiRoot();
-
-export const API_BASE =
-  import.meta.env.DEV && !clean ? "/api" : `${(clean || RENDER_API_ROOT).replace(/\/+$/, "")}/api`;
-
-export const API_ROOT =
-  import.meta.env.DEV && !clean
-    ? typeof window !== "undefined"
-      ? window.location.origin
-      : ""
-    : clean || RENDER_API_ROOT;
+export const API_ROOT = API_BASE.replace(/\/api$/, "");
 
 export const API_HOST = API_ROOT;
 
