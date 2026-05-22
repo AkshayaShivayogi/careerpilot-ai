@@ -15,14 +15,16 @@ export async function connectDb() {
   }
 
   mongoose.set("strictQuery", true);
-  const maxAttempts = Number(process.env.MONGO_CONNECT_RETRIES) || 10;
+  const maxAttempts = 1;
   const delayMs = Number(process.env.MONGO_CONNECT_DELAY_MS) || 2000;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       console.log(`[db] mongoose.connect() attempt ${attempt}/${maxAttempts}`);
       console.log(`[db] URI: ${uri.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@")}`);
-      await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
+      await mongoose.connect(uri, {
+  serverSelectionTimeoutMS: 5000,
+});
       console.log(
         `[db] MongoDB connected — database: "${mongoose.connection.name}", host: ${mongoose.connection.host}`
       );
