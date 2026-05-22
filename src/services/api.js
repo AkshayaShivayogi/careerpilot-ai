@@ -4,6 +4,8 @@ import {
   API_TIMEOUT_MS,
 } from "../lib/api.js";
 
+console.info("[CareerPilot] axios baseURL =", API_BASE);
+
 const api = axios.create({
   baseURL: API_BASE,
   timeout: API_TIMEOUT_MS,

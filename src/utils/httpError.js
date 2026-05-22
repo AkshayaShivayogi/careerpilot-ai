@@ -14,7 +14,10 @@ export function getErrorMessage(error, fallback = "Something went wrong") {
   }
 
   if (error?.code === "ERR_NETWORK" || error?.message === "Network Error" || error?.offline) {
-    return `Cannot reach the API. Start the backend (npm run dev:nocheck) — expected at ${API_ROOT}.`;
+    if (import.meta.env.DEV) {
+      return `Cannot reach the API. Start the backend (npm run dev:nocheck) — expected at ${API_ROOT}.`;
+    }
+    return `Cannot reach the API at ${API_ROOT}. Check your connection or try again later.`;
   }
 
   if (error?.code === "ECONNABORTED") {
