@@ -221,9 +221,13 @@ careerpilot-ai/
 
 Frontend Deployment:
 - Render 
+Frontend: https://careerpilot-frontend-mywo.onrender.com
 
 Backend Deployment:
 - Render / Railway
+Backend API:
+https://careerpilot-backend-pdsi.onrender.com/api/health
+
 
 Database:
 - MongoDB Atlas
