@@ -12,6 +12,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/dashboard";
+  const successMessage = location.state?.message || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,13 +36,19 @@ export default function Login() {
     <div>
       <h2 className="font-display text-2xl font-bold">Welcome back</h2>
       <p className="mt-1 text-sm text-slate-400">Sign in to your workspace</p>
+      {successMessage && <p className="mt-3 text-sm text-emerald-400">{successMessage}</p>}
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <label className="block">
           <span className="text-sm text-slate-400">Email</span>
           <input className="input-field mt-1" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
         <label className="block">
-          <span className="text-sm text-slate-400">Password</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-400">Password</span>
+            <Link to="/forgot-password" className="text-xs text-electric-400 hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <input className="input-field mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </label>
         {error && <p className="text-sm text-red-400">{error}</p>}

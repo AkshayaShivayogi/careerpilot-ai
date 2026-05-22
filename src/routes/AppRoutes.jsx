@@ -7,6 +7,8 @@ import DashboardLayout from "../layouts/DashboardLayout.jsx";
 import Landing from "../pages/Landing.jsx";
 import Signup from "../pages/Signup.jsx";
 import Login from "../pages/Login.jsx";
+import ForgotPassword from "../pages/ForgotPassword.jsx";
+import ResetPassword from "../pages/ResetPassword.jsx";
 import Dashboard from "../pages/Dashboard.jsx";
 import Profile from "../pages/Profile.jsx";
 import Roadmap from "../pages/Roadmap.jsx";
@@ -30,6 +32,8 @@ export default function AppRoutes() {
             <Route element={<AuthLayout />}>
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>

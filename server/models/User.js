@@ -123,6 +123,8 @@ const userSchema = new mongoose.Schema(
     googleId: { type: String, sparse: true, unique: true },
     authProvider: { type: String, enum: ["local", "google"], default: "local" },
     refreshTokenHash: { type: String, select: false },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
     profilePicture: { type: String, default: "" },
     profileImage: { type: String, default: "" },
     role: { type: String, enum: ["user", "admin"], default: "user" },

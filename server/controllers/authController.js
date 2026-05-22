@@ -7,6 +7,8 @@ import { logActivity } from "../services/activity.js";
 import { calcProfileCompletion } from "../utils/profileCompletion.js";
 import { findUserByEmail, normalizeEmail } from "../utils/findUserByEmail.js";
 import { verifyPassword, hashPassword } from "../utils/passwordAuth.js";
+import { generateResetToken, hashResetToken } from "../utils/resetToken.js";
+import { sendPasswordResetEmail, getClientBaseUrl } from "../services/mailService.js";
 
 function publicUser(doc) {
   const user = doc.toPublicJSON();
@@ -296,6 +298,103 @@ export async function logout(req, res, next) {
     await logActivity(req.user, "auth", "Signed out");
     res.json({ success: true, message: "Logged out" });
   } catch (e) {
+    next(e);
+  }
+}
+
+const FORGOT_PASSWORD_MESSAGE =
+  "If an account exists with that email, you will receive password reset instructions shortly.";
+
+export async function forgotPassword(req, res, next) {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: "Enter a valid email address" });
+    }
+
+    const user = await findUserByEmail(email);
+    if (user) {
+      const { token, hash, expires } = generateResetToken();
+      await User.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            passwordResetToken: hash,
+            passwordResetExpires: expires,
+          },
+        }
+      );
+
+      const resetUrl = `${getClientBaseUrl()}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+      try {
+        await sendPasswordResetEmail({
+          to: email,
+          resetUrl,
+          fullName: user.fullName,
+        });
+      } catch (mailErr) {
+        console.error("[auth] forgot-password email failed:", mailErr.message);
+      }
+
+      await logActivity(user, "auth", "Password reset requested");
+    }
+
+    res.json({ success: true, message: FORGOT_PASSWORD_MESSAGE });
+  } catch (e) {
+    console.error("[auth] forgot-password error:", e.message);
+    next(e);
+  }
+}
+
+export async function resetPassword(req, res, next) {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const token = String(req.body.token || "").trim();
+    const password = String(req.body.password || "");
+
+    if (!email || !token) {
+      return res.status(400).json({ success: false, message: "Email and reset token are required" });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    const tokenHash = hashResetToken(token);
+    const found = await findUserByEmail(email);
+    if (!found) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset link. Request a new password reset.",
+      });
+    }
+
+    const user = await User.findById(found._id).select("+passwordResetToken +passwordResetExpires");
+    const validToken =
+      user?.passwordResetToken === tokenHash &&
+      user?.passwordResetExpires &&
+      user.passwordResetExpires > new Date();
+
+    if (!validToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset link. Request a new password reset.",
+      });
+    }
+
+    const hash = await hashPassword(password);
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: { password: hash, authProvider: "local", refreshTokenHash: "" },
+        $unset: { passwordResetToken: "", passwordResetExpires: "" },
+      }
+    );
+
+    await logActivity(user, "auth", "Password reset completed");
+
+    res.json({ success: true, message: "Password updated. You can sign in with your new password." });
+  } catch (e) {
+    console.error("[auth] reset-password error:", e.message);
     next(e);
   }
 }
