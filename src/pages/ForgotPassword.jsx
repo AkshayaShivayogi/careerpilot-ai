@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import api, { API_BASE } from "../services/api.js";
+import api from "../services/api.js";
 import { getErrorMessage } from "../utils/httpError.js";
 import { ButtonLoading } from "../components/Loader.jsx";
 
@@ -15,8 +15,6 @@ export default function ForgotPassword() {
     setError("");
     setMessage("");
     setLoading(true);
-    const endpoint = `${API_BASE}/auth/forgot-password`;
-    console.info("[ForgotPassword] POST", endpoint);
     try {
       const { data } = await api.post("/auth/forgot-password", {
         email: email.trim().toLowerCase(),

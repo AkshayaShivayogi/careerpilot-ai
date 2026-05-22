@@ -319,12 +319,12 @@ export async function forgotPassword(req, res, next) {
       return res.status(400).json({ success: false, message: "Enter a valid email address" });
     }
 
-    if (!smtpConfigured()) {
-      console.error("[auth] forgot-password: SMTP env missing on server");
+    if (!smtpConfigured() || !getClientBaseUrl()) {
+      console.error("[auth] forgot-password: missing SMTP_USER, SMTP_PASS, SMTP_FROM, or CLIENT_URL");
       return res.status(503).json({
         success: false,
         message: "Email service is not configured on the server.",
-        mailError: "Missing SMTP_USER or SMTP_PASS",
+        mailError: "Missing SMTP_USER, SMTP_PASS, SMTP_FROM, or CLIENT_URL",
       });
     }
 
