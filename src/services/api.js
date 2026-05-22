@@ -7,7 +7,7 @@ import {
 const api = axios.create({
   baseURL: API_BASE,
   timeout: API_TIMEOUT_MS,
-  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
 });
 
 export async function apiRequest(config) {

@@ -1,12 +1,15 @@
-const RAW_API =
-  import.meta.env.VITE_API_URL ||
-  "https://careerpilot-backend-pdsi.onrender.com";
+function resolveApiRoot() {
+  const envUrl = import.meta.env.VITE_API_URL?.trim();
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+  if (import.meta.env.DEV) return "";
+  return "https://careerpilot-backend-pdsi.onrender.com";
+}
 
-const clean = RAW_API.replace(/\/+$/, "");
+const clean = resolveApiRoot();
 
-export const API_HOST = clean;
-export const API_ROOT = clean;
-export const API_BASE = `${clean}/api`;
+export const API_HOST = clean || (typeof window !== "undefined" ? window.location.origin : "");
+export const API_ROOT = API_HOST;
+export const API_BASE = clean ? `${clean}/api` : "/api";
 
 export const API_TIMEOUT_MS = 30000;
 

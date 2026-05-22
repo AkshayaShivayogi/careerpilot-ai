@@ -60,7 +60,9 @@ api.interceptors.response.use(
       url.includes("/auth/login") ||
       url.includes("/auth/signup") ||
       url.includes("/auth/refresh") ||
-      url.includes("/auth/google");
+      url.includes("/auth/google") ||
+      url.includes("/auth/forgot-password") ||
+      url.includes("/auth/reset-password");
 
     if (status === 401 && !skipRefresh && !original._retry) {
       const refresh = getRefreshToken();
