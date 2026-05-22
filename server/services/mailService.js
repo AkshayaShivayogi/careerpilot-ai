@@ -1,8 +1,6 @@
 import nodemailer from "nodemailer";
 
-const SEND_TIMEOUT_MS = 35_000;
-
-/** Trim Render/env values; strip wrapping quotes; Gmail app passwords often include spaces. */
+/** Trim Render/env values; strip wrapping quotes. */
 export function cleanEnv(value) {
   if (value == null) return "";
   let v = String(value).trim();
@@ -15,23 +13,12 @@ export function cleanEnv(value) {
   return v;
 }
 
-function normalizeAppPassword(value) {
-  return cleanEnv(value).replace(/\s+/g, "");
-}
-
-/** Env names must match Render: SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, SMTP_FROM, CLIENT_URL */
-export function getSmtpConfig() {
-  const host = cleanEnv(process.env.SMTP_HOST);
-  const port = Number(process.env.SMTP_PORT) || 587;
-  const secure = process.env.SMTP_SECURE === "true";
-  const user = cleanEnv(process.env.SMTP_USER);
-  const pass = normalizeAppPassword(process.env.SMTP_PASS);
-  return { host, port, secure, user, pass };
-}
-
 export function smtpConfigured() {
-  const { host, user, pass } = getSmtpConfig();
-  return Boolean(host && user && pass);
+  return Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim()
+  );
 }
 
 export function formatMailError(err) {
@@ -46,61 +33,31 @@ export function formatMailError(err) {
   return parts.join(" | ");
 }
 
-function withTimeout(promise, ms, label) {
-  let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      const err = new Error(`${label} timed out after ${ms}ms`);
-      err.code = "SMTP_TIMEOUT";
-      reject(err);
-    }, ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
-
-async function closeTransport(transport) {
-  try {
-    if (transport?.close) await transport.close();
-  } catch (err) {
-    console.warn("[mail] transport.close:", err?.message);
-  }
-}
-
 export function createTransport() {
   if (!smtpConfigured()) {
     console.error("[mail] createTransport: missing SMTP_HOST, SMTP_USER, or SMTP_PASS");
     return null;
   }
 
-  const host = cleanEnv(process.env.SMTP_HOST);
-  const port = Number(process.env.SMTP_PORT) || 587;
-  const secure = process.env.SMTP_SECURE === "true";
-  const user = cleanEnv(process.env.SMTP_USER);
-  const pass = normalizeAppPassword(process.env.SMTP_PASS);
-
-  const options = {
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-    connectionTimeout: 30_000,
-    greetingTimeout: 30_000,
-    socketTimeout: 30_000,
-  };
-
-  if (port === 587 && !secure) {
-    options.requireTLS = true;
-  }
-
-  console.log("[mail] createTransport:", {
-    host: options.host,
-    port: options.port,
-    secure: options.secure,
-    user: options.auth.user,
-    hasPassword: Boolean(options.auth.pass),
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
   });
 
-  return nodemailer.createTransport(options);
+  console.log("[mail] createTransport:", {
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === "true",
+    user: process.env.SMTP_USER,
+    hasPassword: Boolean(process.env.SMTP_PASS),
+  });
+
+  return transporter;
 }
 
 export function getClientBaseUrl() {
@@ -117,10 +74,9 @@ export function buildPasswordResetUrl(token, email) {
 }
 
 function resolveFromAddress() {
-  const { user } = getSmtpConfig();
   const fromEnv = cleanEnv(process.env.SMTP_FROM);
   if (fromEnv && fromEnv.includes("@")) return fromEnv;
-  return cleanEnv(process.env.SMTP_USER) || user;
+  return process.env.SMTP_USER;
 }
 
 /**
@@ -135,41 +91,37 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
 
   console.log("[mail] sendPasswordResetEmail →", { to, resetUrl });
 
-  const transport = createTransport();
-  if (!transport) {
+  const transporter = createTransport();
+  if (!transporter) {
     return { sent: false, error: "Failed to create nodemailer transport" };
   }
 
   const from = resolveFromAddress();
 
   try {
-    const info = await withTimeout(
-      transport.sendMail({
-        from,
-        to,
-        subject: "Reset your CareerPilot AI password",
-        text: [
-          `Hi ${fullName || "there"},`,
-          "",
-          "We received a request to reset your password.",
-          "",
-          `Reset your password using this link (expires in 1 hour):`,
-          resetUrl,
-          "",
-          "If you did not request this, you can ignore this email.",
-        ].join("\n"),
-        html: `
-          <p>Hi ${fullName || "there"},</p>
-          <p>We received a request to reset your CareerPilot AI password.</p>
-          <p><a href="${resetUrl}">Reset your password</a></p>
-          <p>Or copy this link: ${resetUrl}</p>
-          <p>This link expires in 1 hour.</p>
-          <p>If you did not request this, you can ignore this email.</p>
-        `,
-      }),
-      SEND_TIMEOUT_MS,
-      "transporter.sendMail"
-    );
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject: "Reset your CareerPilot AI password",
+      text: [
+        `Hi ${fullName || "there"},`,
+        "",
+        "We received a request to reset your password.",
+        "",
+        `Reset your password using this link (expires in 1 hour):`,
+        resetUrl,
+        "",
+        "If you did not request this, you can ignore this email.",
+      ].join("\n"),
+      html: `
+        <p>Hi ${fullName || "there"},</p>
+        <p>We received a request to reset your CareerPilot AI password.</p>
+        <p><a href="${resetUrl}">Reset your password</a></p>
+        <p>Or copy this link: ${resetUrl}</p>
+        <p>This link expires in 1 hour.</p>
+        <p>If you did not request this, you can ignore this email.</p>
+      `,
+    });
 
     if (info.rejected?.length) {
       const err = `sendMail rejected recipients: ${info.rejected.join(", ")}`;
@@ -191,6 +143,10 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     console.error("[mail] nodemailer error:", formatMailError(err));
     return { sent: false, error: formatMailError(err) };
   } finally {
-    await closeTransport(transport);
+    try {
+      if (transporter?.close) await transporter.close();
+    } catch (closeErr) {
+      console.warn("[mail] transport.close:", closeErr?.message);
+    }
   }
 }
