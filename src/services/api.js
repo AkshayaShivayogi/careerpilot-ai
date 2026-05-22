@@ -1,17 +1,32 @@
-/** App-wide API entry — import from here, not hardcoded URLs */
-export {
-  default,
-  apiRequest,
-  checkApiHealth,
-  ApiError,
+import axios from "axios";
+import {
   API_BASE,
-  API_HOST,
-  API_ROOT,
   API_TIMEOUT_MS,
-  isPublicAiPath,
 } from "../lib/api.js";
 
-export { default as api } from "../lib/api.js";
-export { safeApi, safeApiCall, SAFE_API_TIMEOUT_MS } from "../utils/safeApi.js";
+const api = axios.create({
+  baseURL: API_BASE,
+  timeout: API_TIMEOUT_MS,
+  withCredentials: true,
+});
 
-export { setToken, clearToken, getToken, getRefreshToken, setSessionTokens, TOKEN_KEY } from "./tokenStore.js";
+export async function apiRequest(config) {
+  const response = await api(config);
+  return response.data;
+}
+
+export async function checkApiHealth() {
+  try {
+    await api.get("/health");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export {
+  API_BASE,
+  API_TIMEOUT_MS,
+};
+
+export default api;
