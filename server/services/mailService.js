@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
 
-const VERIFY_TIMEOUT_MS = 10_000;
-const SEND_TIMEOUT_MS = 20_000;
+const SEND_TIMEOUT_MS = 35_000;
 
 /** Trim Render/env values; strip wrapping quotes; Gmail app passwords often include spaces. */
 export function cleanEnv(value) {
@@ -84,9 +83,9 @@ export function createTransport() {
     port,
     secure,
     auth: { user, pass },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
+    connectionTimeout: 30_000,
+    greetingTimeout: 30_000,
+    socketTimeout: 30_000,
   };
 
   if (port === 587 && !secure) {
@@ -125,29 +124,6 @@ function resolveFromAddress() {
 }
 
 /**
- * @returns {Promise<{ ok: boolean, error?: string }>}
- */
-export async function verifySmtpConnection() {
-  const transport = createTransport();
-  if (!transport) {
-    return { ok: false, error: "SMTP not configured (SMTP_HOST, SMTP_USER, SMTP_PASS)" };
-  }
-
-  console.log("[mail] transporter.verify() starting…");
-  try {
-    await withTimeout(transport.verify(), VERIFY_TIMEOUT_MS, "transporter.verify");
-    console.log("[mail] transporter.verify() OK");
-    return { ok: true };
-  } catch (err) {
-    console.error("[mail] transporter.verify() FAILED — full error:", err);
-    console.error("[mail] transporter.verify() detail:", formatMailError(err));
-    return { ok: false, error: formatMailError(err) };
-  } finally {
-    await closeTransport(transport);
-  }
-}
-
-/**
  * @returns {Promise<{ sent: boolean, messageId?: string, error?: string, info?: object }>}
  */
 export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
@@ -165,16 +141,6 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
   }
 
   const from = resolveFromAddress();
-
-  try {
-    console.log("[mail] transporter.verify() before sendMail…");
-    await withTimeout(transport.verify(), VERIFY_TIMEOUT_MS, "transporter.verify");
-    console.log("[mail] transporter.verify() before sendMail OK");
-  } catch (verifyErr) {
-    console.error("[mail] transporter.verify() before sendMail FAILED:", verifyErr);
-    await closeTransport(transport);
-    return { sent: false, error: formatMailError(verifyErr) };
-  }
 
   try {
     const info = await withTimeout(

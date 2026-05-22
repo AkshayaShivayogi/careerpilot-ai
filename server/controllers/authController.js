@@ -13,7 +13,6 @@ import {
   buildPasswordResetUrl,
   getClientBaseUrl,
   smtpConfigured,
-  verifySmtpConnection,
 } from "../services/mailService.js";
 
 function publicUser(doc) {
@@ -383,9 +382,6 @@ export async function forgotPassword(req, res, next) {
     });
 
     if (!mailResult.sent) {
-      const verifyDebug = await verifySmtpConnection();
-      console.error("[auth] SMTP verify after failed send:", verifyDebug);
-
       return res.status(503).json({
         success: false,
         message: "Failed to send reset email.",
