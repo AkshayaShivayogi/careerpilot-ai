@@ -12,9 +12,7 @@ import {
   sendPasswordResetEmail,
   buildPasswordResetUrl,
   getClientBaseUrl,
-  smtpConfigured,
-  getMailServiceStatus,
-  isMailServiceReady,
+  emailServiceConfigured,
 } from "../services/mailService.js";
 
 function publicUser(doc) {
@@ -321,12 +319,11 @@ export async function forgotPassword(req, res, next) {
       return res.status(400).json({ success: false, message: "Enter a valid email address" });
     }
 
-    if (!smtpConfigured() || !getClientBaseUrl()) {
-      console.error("[auth] forgot-password: missing SMTP_USER, SMTP_PASS, SMTP_FROM, or CLIENT_URL");
+    if (!emailServiceConfigured() || !getClientBaseUrl()) {
       return res.status(503).json({
         success: false,
-        message: "Email service is not configured on the server.",
-        mailError: "Missing SMTP_USER, SMTP_PASS, SMTP_FROM, or CLIENT_URL",
+        message: "Mail service unavailable",
+        mailError: "Missing RESEND_API_KEY, EMAIL_FROM, or CLIENT_URL",
       });
     }
 
@@ -355,23 +352,8 @@ export async function forgotPassword(req, res, next) {
     console.log("[auth] reset token saved to MongoDB for:", email);
 
     const resetUrl = buildPasswordResetUrl(token, email);
-    console.log("RESET URL:", resetUrl);
-    console.log("[auth] CLIENT_URL resolved:", getClientBaseUrl());
 
-    if (!isMailServiceReady()) {
-      const mailStatus = getMailServiceStatus();
-      const mailError = mailStatus.error || "Mail service unavailable";
-      console.error("[auth] forgot-password: mail unavailable:", mailError);
-      return res.status(503).json({
-        success: false,
-        message: "Mail service unavailable",
-        mailError,
-      });
-    }
-
-    const mailStarted = Date.now();
-    let mailResult = { sent: false, error: "Unknown mail error" };
-
+    let mailResult;
     try {
       mailResult = await sendPasswordResetEmail({
         to: email,
@@ -379,20 +361,12 @@ export async function forgotPassword(req, res, next) {
         fullName: user.fullName,
       });
     } catch (mailErr) {
-      console.error("[auth] forgot-password mail exception:", mailErr);
-      mailResult = {
-        sent: false,
-        error: mailErr?.message || String(mailErr),
-      };
+      return res.status(503).json({
+        success: false,
+        message: "Mail service unavailable",
+        mailError: mailErr?.message || String(mailErr),
+      });
     }
-
-    console.log("[auth] forgot-password mail result:", {
-      email,
-      ms: Date.now() - mailStarted,
-      sent: mailResult.sent,
-      messageId: mailResult.messageId,
-      error: mailResult.error,
-    });
 
     if (!mailResult.sent) {
       return res.status(503).json({
@@ -401,8 +375,6 @@ export async function forgotPassword(req, res, next) {
         mailError: mailResult.error,
       });
     }
-
-    console.log("EMAIL SENT");
     await logActivity(user, "auth", "Password reset requested");
 
     return res.json({
