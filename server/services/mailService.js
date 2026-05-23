@@ -1,7 +1,5 @@
 import nodemailer from "nodemailer";
 
-const SEND_MAIL_MAX_MS = 20000;
-
 export function cleanEnv(value) {
   if (value == null) return "";
   let v = String(value).trim();
@@ -53,29 +51,6 @@ export function buildPasswordResetUrl(token, email) {
   return `${clientUrl}/reset-password?token=${token}&email=${email}`;
 }
 
-function createGmailTransporter() {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: String(process.env.SMTP_PASS || "").replace(/\s+/g, ""),
-    },
-  });
-}
-
-function withSendDeadline(promise) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => {
-        const err = new Error(`sendMail timed out after ${SEND_MAIL_MAX_MS}ms`);
-        err.code = "SMTP_TIMEOUT";
-        reject(err);
-      }, SEND_MAIL_MAX_MS);
-    }),
-  ]);
-}
-
 /**
  * @returns {Promise<{ sent: boolean, messageId?: string, error?: string }>}
  */
@@ -86,7 +61,14 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     return { sent: false, error: msg };
   }
 
-  const transporter = createGmailTransporter();
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
   const subject = "Reset your CareerPilot AI password";
   const html = `
     <p>Hi ${fullName || "there"},</p>
@@ -97,21 +79,15 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     <p>If you did not request this, you can ignore this email.</p>
   `;
 
-  console.log("[mail] sendMail start:", {
-    to,
-    from: process.env.SMTP_FROM,
-    service: "gmail",
-  });
+  console.log("[mail] sendMail start:", { to, from: process.env.SMTP_FROM });
 
   try {
-    const info = await withSendDeadline(
-      transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to,
-        subject,
-        html,
-      })
-    );
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject,
+      html,
+    });
 
     if (info.rejected?.length) {
       const err = `sendMail rejected: ${info.rejected.join(", ")}`;
@@ -123,14 +99,7 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     console.log("EMAIL SENT");
     return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.error("[mail] sendMail FAILED — full error:", err);
-    console.error("[mail] formatted:", formatMailError(err));
+    console.error("[mail] sendMail FAILED:", err);
     return { sent: false, error: formatMailError(err) };
-  } finally {
-    try {
-      transporter.close();
-    } catch {
-      /* ignore */
-    }
   }
 }
