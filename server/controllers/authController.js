@@ -13,6 +13,7 @@ import {
   buildPasswordResetUrl,
   getClientBaseUrl,
   smtpConfigured,
+  getMailServiceStatus,
 } from "../services/mailService.js";
 
 function publicUser(doc) {
@@ -355,6 +356,16 @@ export async function forgotPassword(req, res, next) {
     const resetUrl = buildPasswordResetUrl(token, email);
     console.log("RESET URL:", resetUrl);
     console.log("[auth] CLIENT_URL resolved:", getClientBaseUrl());
+
+    const mailStatus = getMailServiceStatus();
+    if (mailStatus.checked && !mailStatus.ok) {
+      console.error("[auth] forgot-password: SMTP startup verify failed:", mailStatus.error);
+      return res.status(503).json({
+        success: false,
+        message: "Failed to send reset email.",
+        mailError: mailStatus.error,
+      });
+    }
 
     const mailStarted = Date.now();
     let mailResult = { sent: false, error: "Unknown mail error" };

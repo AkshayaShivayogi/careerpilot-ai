@@ -35,6 +35,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 
 import { seedInterviewQuestions } from "./services/questionSeed.js";
+import { initMailService } from "./services/mailService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -149,6 +150,14 @@ async function startServer() {
     await connectDb();
 
     console.log("[server] MongoDB connected successfully");
+
+    initMailService()
+      .then((status) => {
+        console.log("[server] mail service init:", status);
+      })
+      .catch((err) => {
+        console.error("[server] mail service init error:", err?.message || err);
+      });
 
     app.listen(PORT, () => {
       console.log(`[server] Running on port ${PORT}`);
