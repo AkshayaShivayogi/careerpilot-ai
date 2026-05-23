@@ -68,6 +68,8 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
       pass: process.env.SMTP_PASS,
     },
   });
+  await transporter.verify();
+console.log("[mail] Gmail SMTP connected");
 
   const subject = "Reset your CareerPilot AI password";
   const html = `
