@@ -63,8 +63,8 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
 
   const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: cleanEnv(process.env.SMTP_USER),
     pass: cleanEnv(process.env.SMTP_PASS),
