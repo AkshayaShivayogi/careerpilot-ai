@@ -1,8 +1,5 @@
 import nodemailer from "nodemailer";
 
-const VERIFY_DEADLINE_MS = 12_000;
-const SEND_DEADLINE_MS = 15_000;
-
 let transporter = null;
 let mailVerifyState = {
   checked: false,
@@ -47,38 +44,37 @@ export function formatMailError(err) {
     .join(" | ");
 }
 
-function runWithDeadline(promise, ms, label) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`${label} exceeded ${ms}ms`));
-      }, ms);
-    }),
-  ]);
-}
-
-function buildTransporter() {
+function createTransporter() {
   console.log("[mail] before transporter creation");
+
   const instance = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
       user: cleanEnv(process.env.SMTP_USER),
-      pass: cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, ""),
+      pass: cleanEnv(process.env.SMTP_PASS),
     },
+    tls: {
+      rejectUnauthorized: false,
+      family: 4,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
+
   console.log("[mail] after transporter creation", {
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     user: cleanEnv(process.env.SMTP_USER),
   });
+
   return instance;
 }
 
-/** Startup SMTP verify — does not block server listen on failure. */
 export async function initMailService() {
   if (!smtpConfigured()) {
     mailVerifyState = {
@@ -90,15 +86,14 @@ export async function initMailService() {
     return { ...mailVerifyState };
   }
 
-  console.log("[mail] startup: transporter.verify() starting");
   try {
-    transporter = buildTransporter();
-    await runWithDeadline(transporter.verify(), VERIFY_DEADLINE_MS, "transporter.verify");
+    transporter = createTransporter();
+    await transporter.verify();
     mailVerifyState = { checked: true, ok: true, error: null };
-    console.log("[mail] startup: transporter.verify() OK");
+    console.log("[mail] transporter.verify() OK");
   } catch (err) {
-    console.error("[mail] startup: transporter.verify() FAILED", err);
-    console.error("[mail] startup: formatted error:", formatMailError(err));
+    console.error("[mail] transporter.verify() FAILED — full error:", err);
+    console.error("[mail] FULL SMTP ERROR:", formatMailError(err));
     transporter = null;
     mailVerifyState = {
       checked: true,
@@ -112,6 +107,10 @@ export async function initMailService() {
 
 export function getMailServiceStatus() {
   return { ...mailVerifyState };
+}
+
+export function isMailServiceReady() {
+  return mailVerifyState.checked && mailVerifyState.ok && Boolean(transporter);
 }
 
 export function getClientBaseUrl() {
@@ -141,16 +140,10 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     await initMailService();
   }
 
-  if (!mailVerifyState.ok) {
-    console.error("[mail] before sendMail: SMTP not ready —", mailVerifyState.error);
-    return {
-      sent: false,
-      error: mailVerifyState.error || "SMTP connection not available",
-    };
-  }
-
-  if (!transporter) {
-    transporter = buildTransporter();
+  if (!isMailServiceReady()) {
+    const error = mailVerifyState.error || "Mail service unavailable";
+    console.error("[mail] sendMail skipped — SMTP not ready:", error);
+    return { sent: false, error };
   }
 
   const from = cleanEnv(process.env.SMTP_FROM);
@@ -164,18 +157,19 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     <p>If you did not request this, you can ignore this email.</p>
   `;
 
-  console.log("[mail] before sendMail", { to, from, resetUrl });
+  console.log("[mail] sendMail start", { to, from, resetUrl });
 
   try {
-    const info = await runWithDeadline(
-      transporter.sendMail({ from, to, subject, html }),
-      SEND_DEADLINE_MS,
-      "sendMail"
-    );
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+    });
 
     if (info.rejected?.length) {
       const error = `sendMail rejected: ${info.rejected.join(", ")}`;
-      console.error("[mail] after sendMail: rejected", error);
+      console.error("[mail] FULL SMTP ERROR:", error);
       return { sent: false, error };
     }
 
@@ -187,9 +181,9 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
     console.log("EMAIL SENT");
     return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.error("[mail] after sendMail FAILED", err);
+    console.error("[mail] sendMail FAILED — full error:", err);
     const error = formatMailError(err);
-    console.error("[mail] formatted error:", error);
+    console.error("[mail] FULL SMTP ERROR:", error);
     return { sent: false, error };
   }
 }

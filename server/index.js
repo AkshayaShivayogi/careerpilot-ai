@@ -151,13 +151,8 @@ async function startServer() {
 
     console.log("[server] MongoDB connected successfully");
 
-    initMailService()
-      .then((status) => {
-        console.log("[server] mail service init:", status);
-      })
-      .catch((err) => {
-        console.error("[server] mail service init error:", err?.message || err);
-      });
+    const mailStatus = await initMailService();
+    console.log("[server] mail service init:", mailStatus);
 
     app.listen(PORT, () => {
       console.log(`[server] Running on port ${PORT}`);
