@@ -62,15 +62,17 @@ export async function sendPasswordResetEmail({ to, resetUrl, fullName }) {
   }
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-  await transporter.verify();
-console.log("[mail] Gmail SMTP connected");
-
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: cleanEnv(process.env.SMTP_USER),
+    pass: cleanEnv(process.env.SMTP_PASS),
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
   const subject = "Reset your CareerPilot AI password";
   const html = `
     <p>Hi ${fullName || "there"},</p>
